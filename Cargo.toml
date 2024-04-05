@@ -19,13 +19,13 @@ default = ["proptest"]
 proptest = ["msgpack-value/proptest"]
 
 [dependencies]
-msgpack-schema-impl = { version = "=1.1.0", path = "./msgpack-schema-impl" }
-msgpack-value = { version = "=1.1.0", path = "./msgpack-value", default-features = false }
+msgpack-schema-impl = { version = "1.1.0", path = "./msgpack-schema-impl" }
+msgpack-value = { version = "1.1.0", path = "./msgpack-value", default-features = false }
 rmp = "0.8"
-thiserror = "^1.0.25"
+thiserror = "1.0"
 byteorder = "1"
 
 [dev-dependencies]
 trybuild = "1.0"
-proptest = "1"
-proptest-derive = "0.3"
+proptest = "1.4"
+proptest-derive = "0.4"
