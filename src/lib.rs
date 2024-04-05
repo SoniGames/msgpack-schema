@@ -290,7 +290,7 @@
 //! struct IpAddr(pub std::net::IpAddr);
 //!
 //! impl Serialize for IpAddr {
-//!     fn serialize(&self, serializer: &mut Serializer) {
+//!     fn serialize<W:std::io::Write>(&self, serializer: &mut Serializer<W>) {
 //!         match self.0 {
 //!             std::net::IpAddr::V4(v4) => {
 //!                 serializer.serialize_str(&v4.octets()); // 5 bytes
@@ -505,21 +505,14 @@ use std::io::Write;
 use thiserror::Error;
 
 /// This type holds all intermediate states during serialization.
-pub struct Serializer {
-    w: Vec<u8>,
+pub struct Serializer<W> {
+    w: W,
 }
 
-impl Serializer {
-    fn new() -> Self {
-        Self { w: vec![] }
-    }
-    fn with_vec(w: Vec<u8>) -> Self {
+impl<W: Write> Serializer<W> {
+    fn new(w: W) -> Self {
         Self { w }
     }
-    fn into_inner(self) -> Vec<u8> {
-        self.w
-    }
-
     pub fn serialize_nil(&mut self) {
         rmp::encode::write_nil(&mut self.w).unwrap()
     }
@@ -564,107 +557,107 @@ impl Serializer {
 }
 
 pub trait Serialize {
-    fn serialize(&self, serializer: &mut Serializer);
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>);
 }
 
 impl<T: Serialize> Serialize for &T {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         T::serialize(*self, serializer)
     }
 }
 
 impl Serialize for bool {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_bool(*self)
     }
 }
 
 impl Serialize for Int {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(*self)
     }
 }
 
 impl Serialize for u8 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for u16 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for u32 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for u64 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for i8 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for i16 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for i32 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for i64 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_int(Int::from(*self))
     }
 }
 
 impl Serialize for f32 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_f32(*self)
     }
 }
 
 impl Serialize for f64 {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_f64(*self)
     }
 }
 
 impl Serialize for Str {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_str(&self.0)
     }
 }
 
 impl Serialize for str {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_str(self.as_bytes())
     }
 }
 
 impl Serialize for String {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_str(self.as_bytes())
     }
 }
 
 impl<T: Serialize> Serialize for [T] {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_array(self.len() as u32);
         for x in self {
             serializer.serialize(x);
@@ -673,7 +666,7 @@ impl<T: Serialize> Serialize for [T] {
 }
 
 impl<T: Serialize> Serialize for Vec<T> {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize_array(self.len() as u32);
         for x in self {
             serializer.serialize(x);
@@ -682,19 +675,19 @@ impl<T: Serialize> Serialize for Vec<T> {
 }
 
 impl<T: Serialize> Serialize for Box<T> {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize(&**self);
     }
 }
 
 impl<T: Serialize> Serialize for std::rc::Rc<T> {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize(&**self);
     }
 }
 
 impl<T: Serialize> Serialize for std::sync::Arc<T> {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         serializer.serialize(&**self);
     }
 }
@@ -702,7 +695,7 @@ impl<T: Serialize> Serialize for std::sync::Arc<T> {
 #[doc(hidden)]
 pub trait StructSerialize: Serialize {
     fn count_fields(&self) -> u32;
-    fn serialize_fields(&self, serializer: &mut Serializer);
+    fn serialize_fields<W: Write>(&self, serializer: &mut Serializer<W>);
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1153,19 +1146,18 @@ impl<T: Deserialize> Deserialize for std::sync::Arc<T> {
 
 /// Write out a MessagePack object.
 pub fn serialize<S: Serialize>(s: S) -> Vec<u8> {
-    let mut serializer = Serializer::new();
+    let mut vec = Vec::<u8>::new();
+    let mut serializer = Serializer::new(&mut vec);
     serializer.serialize(s);
-    serializer.into_inner()
+    vec
 }
 
 /// Write a MessagePack object into the given buffer.
 ///
 /// This function does not modify the data originally in [buf].
-pub fn serialize_into<S: Serialize>(s: S, buf: &mut Vec<u8>) {
-    let v = std::mem::take(buf);
-    let mut serializer = Serializer::with_vec(v);
+pub fn serialize_into<S: Serialize, W: Write>(s: S, buf: W) {
+    let mut serializer = Serializer::new(buf);
     serializer.serialize(s);
-    *buf = serializer.into_inner();
 }
 
 /// Read out a MessagePack object.
@@ -1185,7 +1177,7 @@ fn deserialize_ignores_extra_bytes() {
 }
 
 impl Serialize for Value {
-    fn serialize(&self, serializer: &mut Serializer) {
+    fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
         match self {
             Value::Nil => serializer.serialize_nil(),
             Value::Bool(v) => serializer.serialize_bool(*v),
@@ -1261,7 +1253,7 @@ pub mod value {
     pub struct Nil;
 
     impl Serialize for Nil {
-        fn serialize(&self, serializer: &mut Serializer) {
+        fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
             serializer.serialize_nil()
         }
     }
@@ -1292,7 +1284,7 @@ pub mod value {
     pub struct Empty {}
 
     impl Serialize for Empty {
-        fn serialize(&self, serializer: &mut Serializer) {
+        fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
             serializer.serialize_map(0)
         }
     }
@@ -1357,7 +1349,7 @@ mod tests {
     }
 
     impl Serialize for Human {
-        fn serialize(&self, serializer: &mut Serializer) {
+        fn serialize<W: Write>(&self, serializer: &mut Serializer<W>) {
             serializer.serialize_map(2);
             serializer.serialize(0u32);
             serializer.serialize(self.age);

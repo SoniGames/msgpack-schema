@@ -163,7 +163,7 @@ fn derive_struct(
     let gen = quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics ::msgpack_schema::Serialize for #ty #ty_generics #where_clause {
-            fn serialize(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 let count = <Self as ::msgpack_schema::StructSerialize>::count_fields(self);
                 serializer.serialize_map(count);
                 <Self as ::msgpack_schema::StructSerialize>::serialize_fields(self, serializer);
@@ -176,7 +176,7 @@ fn derive_struct(
                 #count_fields_body
             }
 
-            fn serialize_fields(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize_fields<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 #serialize_fields_body
             }
         }
@@ -206,7 +206,7 @@ fn derive_newtype_struct(
     let gen = quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics ::msgpack_schema::Serialize for #ty #ty_generics #where_clause {
-            fn serialize(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 #fn_body
             }
         }
@@ -242,7 +242,7 @@ fn derive_tuple_struct(
     let gen = quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics ::msgpack_schema::Serialize for #ty #ty_generics #where_clause {
-            fn serialize(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 #fn_body
             }
         }
@@ -326,7 +326,7 @@ fn derive_enum(node: &DeriveInput, enu: &DataEnum) -> Result<TokenStream> {
     let gen = quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics ::msgpack_schema::Serialize for #ty #ty_generics #where_clause {
-            fn serialize(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 #fn_body
             }
         }
@@ -405,7 +405,7 @@ fn derive_untagged_enum(node: &DeriveInput, enu: &DataEnum) -> Result<TokenStrea
     let gen = quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics ::msgpack_schema::Serialize for #ty #ty_generics #where_clause {
-            fn serialize(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 #fn_body
             }
         }
@@ -453,7 +453,7 @@ fn derive_untagged_struct(
     let gen = quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics ::msgpack_schema::Serialize for #ty #ty_generics #where_clause {
-            fn serialize(&self, serializer: &mut ::msgpack_schema::Serializer) {
+            fn serialize<W:std::io::Write>(&self, serializer: &mut ::msgpack_schema::Serializer<W>) {
                 #fn_body
             }
         }
